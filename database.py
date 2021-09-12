@@ -3,6 +3,10 @@ from typing import List, Tuple
 conn = sqlite3.connect('trajectories.db') 
 c = conn.cursor()
 
+class NoUnratedPair(Exception):
+    """No unrated pair found in the database"""
+    pass
+
 def table_exists(): 
     c.execute('''SELECT count(name) FROM sqlite_master WHERE TYPE = 'table' AND name = 'trajectories' ''') 
     if c.fetchone()[0] == 1: 
@@ -47,11 +51,16 @@ def get_all_unrated_pairs() -> List[Tuple[int]]:
     unrated_pairs = c.fetchall()
     return [(line[0],line[1]) for line in unrated_pairs]
 
+def get_number_of_unrated_pairs() -> int:
+    c.execute('''SELECT * FROM trajectories WHERE preference = 0''') 
+    unrated_pairs = c.fetchall()
+    return len(unrated_pairs)
+
 def get_one_unrated_pair() -> Tuple[int]:
     c.execute('''SELECT * FROM trajectories WHERE preference = 0 LIMIT 1''') 
     unrated_pairs = c.fetchall()
     if len(unrated_pairs)==0:
-        raise Exception("No unrated pair.")
+        raise NoUnratedPair
     return (unrated_pairs[0][0], unrated_pairs[0][1])
 
 def get_rating_of_pair(left_id, right_id) -> int:
@@ -69,6 +78,9 @@ def get_rating_of_pair(left_id, right_id) -> int:
         raise Exception("Pair found twice in database - this is due to a bugnot supposed to happen.") 
 
     return traj_pair[0][2]
+
+
+## Utilities only for testing
 
 def delete_pair(left_id, right_id):
     """ Delete a pair of IDs - this is for testing, no actual use case"""
@@ -88,12 +100,12 @@ def return_all_data():
     return data
 
 
-#if __name__ == '__main__':
+if __name__ == '__main__':
 
     # Uncomment this to create test database for videos
-    # create_table()
-    # insert_traj_pair(1000, 1001)
-    # insert_traj_pair(1001, 1002)
-    # insert_traj_pair(1003, 1004)
-    # insert_traj_pair(1003, 1005)
-    # insert_traj_pair(1000, 1006)
+    create_table()
+    insert_traj_pair(1000, 1001)
+    insert_traj_pair(1001, 1002)
+    insert_traj_pair(1003, 1004)
+    insert_traj_pair(1003, 1005)
+    insert_traj_pair(1000, 1006)
